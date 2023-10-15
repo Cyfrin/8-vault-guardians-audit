@@ -29,14 +29,12 @@
 pragma solidity 0.8.18;
 
 import {VaultShares} from "./VaultShares.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVaultData, IVaultShares} from "../interfaces/IVaultData.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract VaultGuardians is Initializable, UUPSUpgradeable, OwnableUpgradeable, IVaultData {
+contract VaultGuardians is Ownable, IVaultData {
     using SafeERC20 for IERC20;
 
     error VaultGuardians__NotEnoughWeth(uint256 amount, uint256 amountNeeded);

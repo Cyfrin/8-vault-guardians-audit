@@ -1,6 +1,14 @@
 # Vault Guardians
 
 
+<br/>
+<p align="center">
+<img src="./vault-guardians.svg" width="400" alt="vault-guardians">
+</p>
+<br/>
+
+
+
 - [Vault Guardians](#vault-guardians)
   - [About](#about)
   - [User flow](#user-flow)
