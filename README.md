@@ -1,11 +1,9 @@
 # Vault Guardians
 
 
-<br/>
 <p align="center">
 <img src="./vault-guardians.svg" width="400" alt="vault-guardians">
 </p>
-<br/>
 
 
 
@@ -116,6 +114,6 @@ forge coverage --report debug
 ```
 
 ```
-- Solc Version: 0.8.18
+- Solc Version: 0.8.20
 - Chain(s) to deploy contract to: Ethereum
 

@@ -26,7 +26,7 @@
  */
 
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.18;
+pragma solidity 0.8.20;
 
 import {VaultShares} from "./VaultShares.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -79,27 +79,16 @@ contract VaultGuardians is Ownable, IVaultData {
                                FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                           EXTERNAL FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
-    function initialize() external initializer {
-        __Ownable_init();
-        __UUPSUpgradeable_init();
-        __VaultGuardians_init();
-    }
-
-    function __VaultGuardians_init() internal onlyInitializing {
+    constructor() Ownable(msg.sender) {
         s_isApprovedToken[address(WETH)] = true;
         s_isApprovedToken[address(USDC)] = true;
         s_isApprovedToken[address(ADAI)] = true;
         s_isApprovedToken[address(LINK)] = true;
     }
+
+    /*//////////////////////////////////////////////////////////////
+                           EXTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     function becomeGuardian(AllocationData memory wethAllocationData) external {
         VaultShares wethVault =
@@ -129,8 +118,6 @@ contract VaultGuardians is Ownable, IVaultData {
                            INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
-
     /*//////////////////////////////////////////////////////////////
                            PRIVATE FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -142,8 +129,4 @@ contract VaultGuardians is Ownable, IVaultData {
     /*//////////////////////////////////////////////////////////////
                    EXTERNAL AND PUBLIC VIEW AND PURE
     //////////////////////////////////////////////////////////////*/
-
-    function version() public pure returns (uint256) {
-        return 1;
-    }
 }
