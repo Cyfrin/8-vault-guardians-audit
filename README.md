@@ -1,11 +1,8 @@
 # Vault Guardians
 
-
 <p align="center">
 <img src="./vault-guardians.svg" width="400" alt="vault-guardians">
 </p>
-
-
 
 - [Vault Guardians](#vault-guardians)
   - [About](#about)
@@ -21,7 +18,6 @@
 - [Misc](#misc)
 - [Audit Scope Details](#audit-scope-details)
 
-
 ## About
 
 This protocol allows users to deposit certain ERC20s into an [ERC4626 vault](https://eips.ethereum.org/EIPS/eip-4626) managed by a human being, or a `vaultGuardian`. The goal of a `vaultGuardian` is to manage the vault in a way that maximizes the value of the vault for the users who have despoited money into the vault.
@@ -35,7 +31,7 @@ To prevent a vault guardian from running off with the funds, the vault guardians
 - [Uniswap v3](https://uniswap.org/) 
 - None (just hold) 
 
-These 4 protocols are known as the "investable universe".
+These 3 protocols (plus "none" makes 4) are known as the "investable universe".
 
 The guardian can move funds in and out of these protocols as much as they like, but they cannot move funds to any other address.
 
