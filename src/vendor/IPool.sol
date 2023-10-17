@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
+import {DataTypes} from "./DataTypes.sol";
+
 // A subset of the AaveV3 Pool interface
 // https://github.com/aave/aave-v3-core/blob/master/contracts/interfaces/IPool.sol
 interface IPool {
@@ -54,4 +56,11 @@ interface IPool {
      * @return The final amount withdrawn
      */
     function withdraw(address asset, uint256 amount, address to) external returns (uint256);
+
+    /**
+     * @notice Returns the state and configuration of the reserve
+     * @param asset The address of the underlying asset of the reserve
+     * @return The state and configuration data of the reserve
+     */
+    function getReserveData(address asset) external view returns (DataTypes.ReserveData memory);
 }

@@ -30,17 +30,18 @@ pragma solidity 0.8.20;
 
 import {VaultShares} from "./VaultShares.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVaultShares, IVaultData} from "../interfaces/IVaultShares.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {AStaticTokenData, IERC20} from "../abstract/AStaticTokenData.sol";
 
-contract VaultGuardians is Ownable, IVaultData {
+contract VaultGuardians is Ownable, AStaticTokenData, IVaultData {
     using SafeERC20 for IERC20;
 
     error VaultGuardians__NotEnoughWeth(uint256 amount, uint256 amountNeeded);
     error VaultGuardians__NotAGuardian(address guardianAddress, IERC20 token);
     error VaultGuardians__CantQuitGuardianWithNonWethVaults(address guardianAddress);
     error VaultGuardians__CantQuitWethWithThisFunction();
+    error VaultGuardians__TransferFailed();
 
     /*//////////////////////////////////////////////////////////////
                            TYPE DECLARATIONS
@@ -49,22 +50,11 @@ contract VaultGuardians is Ownable, IVaultData {
     /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
+    address private immutable i_aavePool;
+    address private immutable i_uniswapV2Router;
+
     uint256 public constant GUARDIAN_STAKE_PRICE = 10 ether;
     mapping(address token => bool approved) public s_isApprovedToken;
-
-    // The following four tokens are the approved tokens the protocol accepts
-    IERC20 public constant WETH = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
-    string private constant WETH_VAULT_NAME = "Vault Guardian WETH";
-    string private constant WETH_VAULT_SYMBOL = "vgWETH";
-    IERC20 public constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
-    string private constant USDC_VAULT_NAME = "Vault Guardian USDC";
-    string private constant USDC_VAULT_SYMBOL = "vgUSDC";
-    IERC20 public constant ADAI = IERC20(0x018008bfb33d285247A21d44E50697654f754e63);
-    string private constant ADAI_VAULT_NAME = "Vault Guardian ADAI";
-    string private constant ADAI_VAULT_SYMBOL = "vgADAI";
-    IERC20 public constant LINK = IERC20(0x514910771AF9Ca656af840dff83E8264EcF986CA);
-    string private constant LINK_VAULT_NAME = "Vault Guardian LINK";
-    string private constant LINK_VAULT_SYMBOL = "vgLINK";
 
     // The guardian's address mapped to the asset, mapped to the allocation data
     mapping(address guardianAddress => mapping(IERC20 asset => IVaultShares vaultShares)) private s_guardians;
@@ -90,11 +80,14 @@ contract VaultGuardians is Ownable, IVaultData {
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-    constructor() Ownable(msg.sender) {
+    constructor(address aavePool, address uniswapV2Router) Ownable(msg.sender) {
         s_isApprovedToken[address(WETH)] = true;
         s_isApprovedToken[address(USDC)] = true;
         s_isApprovedToken[address(ADAI)] = true;
         s_isApprovedToken[address(LINK)] = true;
+
+        i_aavePool = aavePool;
+        i_uniswapV2Router = uniswapV2Router;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -103,7 +96,7 @@ contract VaultGuardians is Ownable, IVaultData {
 
     function becomeGuardian(AllocationData memory wethAllocationData) external {
         VaultShares wethVault =
-            new VaultShares(WETH, WETH_VAULT_NAME, WETH_VAULT_SYMBOL, msg.sender, wethAllocationData);
+        new VaultShares(WETH, WETH_VAULT_NAME, WETH_VAULT_SYMBOL, msg.sender, wethAllocationData, i_aavePool, i_uniswapV2Router);
 
         s_guardians[msg.sender][WETH] = IVaultShares(address(wethVault));
         wethVault.deposit(GUARDIAN_STAKE_PRICE, msg.sender);
@@ -149,6 +142,30 @@ contract VaultGuardians is Ownable, IVaultData {
         uint256 maxRedeemable = vaultShares.maxRedeem(msg.sender);
         uint256 numberOfAssetsReturned = vaultShares.redeem(maxRedeemable, msg.sender, msg.sender);
         emit DinvestedFromGuardian(msg.sender, token, numberOfAssetsReturned);
+    }
+
+    /*
+     * @notice Any excess ERC20s can be scooped up by the DAO. 
+     * @notice This is often just little bits left around from swapping or rounding errors
+     * @dev Since this is owned by the DAO, the funds will always go to the DAO. 
+     * @params asset The ERC20 to sweep
+     */
+    function sweepErc20s(IERC20 asset) external onlyOwner {
+        uint256 amount = asset.balanceOf(address(this));
+        asset.safeTransfer(owner(), amount);
+    }
+
+    /*
+     * @notice Any excess ETH can be scooped up by the DAO. 
+     * @notice This is often just little bits left around from swapping or rounding errors
+     * @dev Since this is owned by the DAO, the funds will always go to the DAO. 
+     */
+    function sweepEth() external onlyOwner {
+        uint256 amount = address(this).balance;
+        (bool success,) = payable(owner()).call{value: amount}("");
+        if (!success) {
+            revert VaultGuardians__TransferFailed();
+        }
     }
 
     /*//////////////////////////////////////////////////////////////
