@@ -7,6 +7,7 @@
 - [Vault Guardians](#vault-guardians)
   - [About](#about)
   - [User flow](#user-flow)
+  - [The DAO](#the-dao)
   - [Summary](#summary)
 - [Getting Started](#getting-started)
   - [Requirements](#requirements)
@@ -27,11 +28,10 @@ You can think of a `vaultGuardian` as a fund manager.
 To prevent a vault guardian from running off with the funds, the vault guardians are only allowed to deposit and withdraw the ERC20s into specific protocols. 
 
 - [Aave v3](https://aave.com/) 
-- [Compound](https://compound.finance/) 
 - [Uniswap v3](https://uniswap.org/) 
 - None (just hold) 
 
-These 3 protocols (plus "none" makes 4) are known as the "investable universe".
+These 2 protocols (plus "none" makes 3) are known as the "investable universe".
 
 The guardian can move funds in and out of these protocols as much as they like, but they cannot move funds to any other address.
 
@@ -49,6 +49,12 @@ The protocol is upgradeable so that if any of the platforms in the investable un
 2. The guardian automatically move the funds based on their strategy 
 3. The guardian can update the settings of their strategy at any time and move the funds
 4. To leave the pool, a user just calls `redeem` or `withdraw`
+
+## The DAO
+
+Guardians can earn DAO tokens by becoming guardians. The DAO is responsible for:
+- Updating pricing parameters
+- Getting a cut of all performance of all guardians
 
 ## Summary
 
