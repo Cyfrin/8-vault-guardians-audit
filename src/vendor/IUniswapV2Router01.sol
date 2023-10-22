@@ -4,8 +4,9 @@ pragma solidity 0.8.20;
 // A subset of the UniswapV2Router01 interface
 // https://github.com/Uniswap/v2-periphery/blob/master/contracts/interfaces/IUniswapV2Router01.sol
 interface IUniswapV2Router01 {
-    function factory() external pure returns (address);
-    function WETH() external pure returns (address);
+    // We've made these view instead of pure to make testing easier
+    function factory() external view returns (address);
+    function WETH() external view returns (address);
 
     function addLiquidity(
         address tokenA,
@@ -28,19 +29,19 @@ interface IUniswapV2Router01 {
         uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB);
 
-    function removeLiquidityWithPermit(
-        address tokenA,
-        address tokenB,
-        uint256 liquidity,
-        uint256 amountAMin,
-        uint256 amountBMin,
-        address to,
-        uint256 deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256 amountA, uint256 amountB);
+    // function removeLiquidityWithPermit(
+    //     address tokenA,
+    //     address tokenB,
+    //     uint256 liquidity,
+    //     uint256 amountAMin,
+    //     uint256 amountBMin,
+    //     address to,
+    //     uint256 deadline,
+    //     bool approveMax,
+    //     uint8 v,
+    //     bytes32 r,
+    //     bytes32 s
+    // ) external returns (uint256 amountA, uint256 amountB);
 
     function swapTokensForExactTokens(
         uint256 amountOut,

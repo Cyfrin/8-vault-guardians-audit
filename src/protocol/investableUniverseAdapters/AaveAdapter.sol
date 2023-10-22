@@ -3,8 +3,11 @@ pragma solidity 0.8.20;
 
 import {IPool} from "../../vendor/IPool.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract AaveAdapter {
+    using SafeERC20 for IERC20;
+
     IPool public immutable i_aavePool;
 
     constructor(address aavePool) {
@@ -12,6 +15,7 @@ contract AaveAdapter {
     }
 
     function aaveInvest(IERC20 asset, uint256 amount) internal {
+        asset.approve(address(i_aavePool), amount);
         i_aavePool.supply(address(asset), amount, address(this), 0);
     }
 
