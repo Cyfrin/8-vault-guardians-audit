@@ -1,7 +1,7 @@
 # Vault Guardians
 
 <p align="center">
-<img src="./vault-guardians.svg" width="400" alt="vault-guardians">
+<img src="./vault-guardians.png" width="400" alt="vault-guardians">
 </p>
 
 - [Vault Guardians](#vault-guardians)
