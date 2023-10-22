@@ -8,6 +8,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 contract AaveAdapter {
     using SafeERC20 for IERC20;
 
+    error AaveAdapter__TransferFailed();
+
     IPool public immutable i_aavePool;
 
     constructor(address aavePool) {
@@ -15,7 +17,10 @@ contract AaveAdapter {
     }
 
     function _aaveInvest(IERC20 asset, uint256 amount) internal {
-        asset.approve(address(i_aavePool), amount);
+        bool succ = asset.approve(address(i_aavePool), amount);
+        if (!succ) {
+            revert AaveAdapter__TransferFailed();
+        }
         i_aavePool.supply(address(asset), amount, address(this), 0);
     }
 

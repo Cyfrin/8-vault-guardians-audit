@@ -7,7 +7,9 @@ abstract contract AStaticWethData {
     // The following four tokens are the approved tokens the protocol accepts
     // The default values are for Mainnet
     IERC20 internal immutable i_weth;
+    // slither-disable-next-line unused-state
     string internal constant WETH_VAULT_NAME = "Vault Guardian WETH";
+    // slither-disable-next-line unused-state
     string internal constant WETH_VAULT_SYMBOL = "vgWETH";
 
     constructor(address weth) {

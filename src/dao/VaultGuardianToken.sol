@@ -14,8 +14,8 @@ contract VaultGuardianToken is ERC20, ERC20Permit, ERC20Votes, Ownable {
         super._update(from, to, value);
     }
 
-    function nonces(address owner) public view override(ERC20Permit, Nonces) returns (uint256) {
-        return super.nonces(owner);
+    function nonces(address ownerOfNonce) public view override(ERC20Permit, Nonces) returns (uint256) {
+        return super.nonces(ownerOfNonce);
     }
 
     function mint(address to, uint256 amount) external onlyOwner {

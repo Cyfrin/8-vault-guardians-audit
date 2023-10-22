@@ -8,7 +8,7 @@ You can use the [audit-report-templating](https://github.com/Cyfrin/audit-report
 4. Add your logo to the directory as a pdf named `logo.pdf`
 5. Run this command:
 ```
-pandoc 2023-09-01-thunder-loan.md -o report.pdf --from markdown --template=eisvogel --listings
+pandoc 2023-11-01-vault-guardians.md -o report.pdf --from markdown --template=eisvogel --listings
 ```
 
 # Tooling
@@ -19,8 +19,8 @@ We can use [cloc](https://www.geeksforgeeks.org/cloc-count-number-of-lines-of-co
 
 Puppy raffle stats:
 ```
-nSLOC: 245
-Complexity: 198
+nSLOC: 686
+Complexity: 432
 ```
 
 # Static Analysis
@@ -30,7 +30,7 @@ Complexity: 198
 We can use [slither](https://github.com/crytic/slither) on this repo. 
 
 ```
-slither . --config-file slither.config.json --checklist
+slither . --config-file slither.config.json
 ```
 
 This will find a number of issues by itself. 

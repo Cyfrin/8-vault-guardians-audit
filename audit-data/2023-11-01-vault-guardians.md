@@ -45,10 +45,6 @@ Lead Auditors:
     - [\[H-1\] Lack of UniswapV2 slippage protection in `UniswapAdapter::_uniswapInvest` enables frontrunners to steal profits](#h-1-lack-of-uniswapv2-slippage-protection-in-uniswapadapter_uniswapinvest-enables-frontrunners-to-steal-profits)
     - [\[H-2\] `ERC4626::totalAssets` checks the balance of vault's underlying asset even when the asset is invested, resulting in incorrect values being returned](#h-2-erc4626totalassets-checks-the-balance-of-vaults-underlying-asset-even-when-the-asset-is-invested-resulting-in-incorrect-values-being-returned)
     - [\[H-3\] Guardians can infinitely mint `VaultGuardianToken`s and take over DAO, stealing DAO fees and maliciously setting parameters](#h-3-guardians-can-infinitely-mint-vaultguardiantokens-and-take-over-dao-stealing-dao-fees-and-maliciously-setting-parameters)
-- [Medium](#medium)
-- [Low](#low)
-- [Informational](#informational)
-- [Gas](#gas)
 
 # Disclaimer
 
@@ -123,6 +119,15 @@ There are 4 main roles associated with the system.
 The Vault Guardians project takes novel approaches to work ERC-4626 into a hedge fund of sorts, but makes some large mistakes on tracking balances and profits. 
 
 ## Issues Found
+
+| Severity | Number of issues found |
+| -------- | ---------------------- |
+| High     | 3                      |
+| Medium   | 0                      |
+| Low      | 0                      |
+| Info     | 0                      |
+| Gas      | 0                      |
+| Total    | 3                      |
 
 ## High
 
@@ -339,8 +344,3 @@ Place the following code into `VaultGuardiansBaseTest.t.sol`
 2. Burn `VaultGuardianToken`s when a user quits 
 
 Or, simply do not allocate `VaultGuardianToken`s to guardians, and instead mint the total supply on contract deployment. 
-
-# Medium
-# Low 
-# Informational
-# Gas 

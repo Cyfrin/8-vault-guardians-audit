@@ -39,6 +39,7 @@ import {VaultGuardianToken} from "../dao/VaultGuardianToken.sol";
  * @notice This contract is the base contract for the VaultGuardians contract.
  * @notice it includes all the functionality of a user or guardian interacting with the protocol
  */
+
 contract VaultGuardiansBase is AStaticTokenData, IVaultData {
     using SafeERC20 for IERC20;
 
@@ -130,6 +131,7 @@ contract VaultGuardiansBase is AStaticTokenData, IVaultData {
         onlyGuardian(i_weth)
         returns (address)
     {
+        //slither-disable-next-line uninitialized-local
         VaultShares tokenVault;
         if (address(token) == address(i_tokenOne)) {
             tokenVault =
@@ -181,10 +183,9 @@ contract VaultGuardiansBase is AStaticTokenData, IVaultData {
     //////////////////////////////////////////////////////////////*/
     function _quitGuardian(IERC20 token) private returns (uint256) {
         IVaultShares tokenVault = IVaultShares(s_guardians[msg.sender][token]);
-        tokenVault.setNotActive();
         s_guardians[msg.sender][token] = IVaultShares(address(0));
         emit GaurdianRemoved(msg.sender, token);
-
+        tokenVault.setNotActive();
         uint256 maxRedeemable = tokenVault.maxRedeem(msg.sender);
         uint256 numberOfAssetsReturned = tokenVault.redeem(maxRedeemable, msg.sender, msg.sender);
         return numberOfAssetsReturned;
@@ -205,6 +206,7 @@ contract VaultGuardiansBase is AStaticTokenData, IVaultData {
         }
     }
 
+    // slither-disable-start reentrancy-eth
     /*
      * @notice allows a user to become a guardian
      * @notice guardians are given a VaultGuardianToken as payment
@@ -213,13 +215,21 @@ contract VaultGuardiansBase is AStaticTokenData, IVaultData {
      */
     function _becomeTokenGuardian(IERC20 token, VaultShares tokenVault) private returns (address) {
         s_guardians[msg.sender][token] = IVaultShares(address(tokenVault));
-        i_vgToken.mint(msg.sender, s_guardianStakePrice);
         emit GuardianAdded(msg.sender, token);
+        i_vgToken.mint(msg.sender, s_guardianStakePrice);
         token.safeTransferFrom(msg.sender, address(this), s_guardianStakePrice);
-        token.approve(address(tokenVault), s_guardianStakePrice);
-        tokenVault.deposit(s_guardianStakePrice, msg.sender);
+        bool succ = token.approve(address(tokenVault), s_guardianStakePrice);
+        if (!succ) {
+            revert VaultGuardiansBase__TransferFailed();
+        }
+        uint256 shares = tokenVault.deposit(s_guardianStakePrice, msg.sender);
+        if (shares == 0) {
+            revert VaultGuardiansBase__TransferFailed();
+        }
         return address(tokenVault);
     }
+    // slither-disable-end reentrancy-eth
+
     /*//////////////////////////////////////////////////////////////
                    INTERNAL AND PRIVATE VIEW AND PURE
     //////////////////////////////////////////////////////////////*/

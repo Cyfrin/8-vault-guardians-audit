@@ -8,7 +8,11 @@ import {GovernorVotesQuorumFraction} from
     "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 
 contract VaultGuardianGovernor is Governor, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction {
-    constructor(IVotes _token) Governor("VaultGuardianGovernor") GovernorVotes(_token) GovernorVotesQuorumFraction(4) {}
+    constructor(IVotes _voteToken)
+        Governor("VaultGuardianGovernor")
+        GovernorVotes(_voteToken)
+        GovernorVotesQuorumFraction(4)
+    {}
 
     function votingDelay() public pure override returns (uint256) {
         return 1;

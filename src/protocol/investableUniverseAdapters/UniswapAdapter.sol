@@ -7,6 +7,8 @@ import {AStaticUSDCData, IERC20} from "../../abstract/AStaticUSDCData.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract UniswapAdapter is AStaticUSDCData {
+    error UniswapAdapter__TransferFailed();
+
     using SafeERC20 for IERC20;
 
     IUniswapV2Router01 internal immutable i_uniswapRouter;
@@ -22,19 +24,32 @@ contract UniswapAdapter is AStaticUSDCData {
         i_uniswapFactory = IUniswapV2Factory(IUniswapV2Router01(i_uniswapRouter).factory());
     }
 
+    // slither-disable-start reentrancy-eth
+    // slither-disable-start reentrancy-benign
+    // slither-disable-start reentrancy-events
     function _uniswapInvest(IERC20 token, uint256 amount) internal {
         IERC20 counterPartyToken = token == i_weth ? i_tokenOne : i_weth;
         // We will do half in WETH and half in the token
         uint256 amountOfTokenToSwap = amount / 2;
         s_pathArray = [address(token), address(counterPartyToken)];
 
-        token.approve(address(i_uniswapRouter), amountOfTokenToSwap);
+        bool succ = token.approve(address(i_uniswapRouter), amountOfTokenToSwap);
+        if (!succ) {
+            revert UniswapAdapter__TransferFailed();
+        }
         uint256[] memory amounts = i_uniswapRouter.swapExactTokensForTokens(
             amountOfTokenToSwap, 0, s_pathArray, address(this), block.timestamp
         );
 
-        counterPartyToken.approve(address(i_uniswapRouter), amounts[1]);
-        token.approve(address(i_uniswapRouter), amountOfTokenToSwap + amounts[0]);
+        succ = counterPartyToken.approve(address(i_uniswapRouter), amounts[1]);
+        if (!succ) {
+            revert UniswapAdapter__TransferFailed();
+        }
+        succ = token.approve(address(i_uniswapRouter), amountOfTokenToSwap + amounts[0]);
+        if (!succ) {
+            revert UniswapAdapter__TransferFailed();
+        }
+
         // amounts[1] should be the WETH amount we got back
         (uint256 tokenAmount, uint256 counterPartyTokenAmount, uint256 liquidity) = i_uniswapRouter.addLiquidity(
             address(token),
@@ -62,4 +77,7 @@ contract UniswapAdapter is AStaticUSDCData {
         emit UniswapDivested(tokenAmount, amounts[1]);
         amountOfAssetReturned = amounts[1];
     }
+    // slither-disable-end reentrancy-benign
+    // slither-disable-end reentrancy-events
+    // slither-disable-end reentrancy-eth
 }

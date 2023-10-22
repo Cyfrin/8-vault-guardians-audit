@@ -6,9 +6,9 @@ import {IVaultShares, IERC4626} from "../interfaces/IVaultShares.sol";
 import {AaveAdapter, IPool} from "./investableUniverseAdapters/AaveAdapter.sol";
 import {UniswapAdapter} from "./investableUniverseAdapters/UniswapAdapter.sol";
 import {DataTypes} from "../vendor/DataTypes.sol";
-import {console} from "forge-std/console.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract VaultShares is ERC4626, IVaultShares, AaveAdapter, UniswapAdapter {
+contract VaultShares is ERC4626, IVaultShares, AaveAdapter, UniswapAdapter, ReentrancyGuard {
     error VaultShares__DepositMoreThanMax(uint256 amount, uint256 max);
     error VaultShares__NotGuardian();
     error VaultShares__NotVaultGuardianContract();
@@ -61,6 +61,7 @@ contract VaultShares is ERC4626, IVaultShares, AaveAdapter, UniswapAdapter {
         _;
     }
 
+    // slither-disable-start reentrancy-eth
     modifier divestThenInvest() {
         uint256 uniswapLiquidityTokensBalance = i_uniswapLiquidityToken.balanceOf(address(this));
         uint256 aaveAtokensBalance = i_aaveAToken.balanceOf(address(this));
@@ -80,6 +81,7 @@ contract VaultShares is ERC4626, IVaultShares, AaveAdapter, UniswapAdapter {
             _investFunds(IERC20(asset()).balanceOf(address(this)));
         }
     }
+    // slither-disable-end reentrancy-eth
 
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
@@ -123,7 +125,14 @@ contract VaultShares is ERC4626, IVaultShares, AaveAdapter, UniswapAdapter {
      *
      * @notice Mints shares to the DAO and the guardian as a fee
      */
-    function deposit(uint256 assets, address receiver) public override(ERC4626, IERC4626) isActive returns (uint256) {
+    // slither-disable-start reentrancy-eth
+    function deposit(uint256 assets, address receiver)
+        public
+        override(ERC4626, IERC4626)
+        isActive
+        nonReentrant
+        returns (uint256)
+    {
         if (assets > maxDeposit(receiver)) {
             revert VaultShares__DepositMoreThanMax(assets, maxDeposit(receiver));
         }
@@ -148,12 +157,13 @@ contract VaultShares is ERC4626, IVaultShares, AaveAdapter, UniswapAdapter {
         _aaveInvest(IERC20(asset()), aaveAllocation);
     }
 
+    // slither-disable-start reentrancy-benign
     /* 
      * @notice Unintelligently just withdraws everything, and then reinvests it all. 
      * @notice Anyone can call this and pay the gas costs to rebalance the portfolio at any time. 
      * @dev We understand that this is horrible for gas costs. 
      */
-    function rebalanceFunds() public isActive divestThenInvest {}
+    function rebalanceFunds() public isActive divestThenInvest nonReentrant {}
 
     /**
      * @dev See {IERC4626-withdraw}.
@@ -165,6 +175,7 @@ contract VaultShares is ERC4626, IVaultShares, AaveAdapter, UniswapAdapter {
         public
         override(IERC4626, ERC4626)
         divestThenInvest
+        nonReentrant
         returns (uint256)
     {
         uint256 shares = super.withdraw(assets, receiver, owner);
@@ -181,11 +192,14 @@ contract VaultShares is ERC4626, IVaultShares, AaveAdapter, UniswapAdapter {
         public
         override(IERC4626, ERC4626)
         divestThenInvest
+        nonReentrant
         returns (uint256)
     {
         uint256 assets = super.redeem(shares, receiver, owner);
         return assets;
     }
+    // slither-disable-end reentrancy-eth
+    // slither-disable-end reentrancy-benign
 
     /*//////////////////////////////////////////////////////////////
                              VIEW AND PURE
