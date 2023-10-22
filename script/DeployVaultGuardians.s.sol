@@ -21,9 +21,11 @@ contract DeployVaultGuardians is Script {
             uniswapRouter,
             weth,
             usdc,
-            link
+            link, 
+            address(vgToken)
         );
         vaultGuardians.transferOwnership(address(vgGovernor));
+        vgToken.transferOwnership(address(vaultGuardians));
         vm.stopBroadcast();
         return (vaultGuardians, vgGovernor, vgToken, networkConfig);
     }

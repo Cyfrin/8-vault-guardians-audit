@@ -13,8 +13,7 @@ contract VaultGuardiansDaoTest is Base_Test {
     }
 
     function testDaoSetupIsCorrect() public {
-        assertEq(vaultGuardianToken.balanceOf(msg.sender), vaultGuardianToken.getInitialTotalSupply());
+        assertEq(vaultGuardianToken.balanceOf(msg.sender), 0);
+        assertEq(vaultGuardianToken.owner(), address(vaultGuardians));
     }
-
-    function testProposeVoteAndExecute() public {}
 }

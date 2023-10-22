@@ -7,6 +7,8 @@ import {VaultShares} from "../../../src/protocol/VaultShares.sol";
 import {ERC20Mock} from "../../mocks/ERC20Mock.sol";
 import {VaultShares, IERC20} from "../../../src/protocol/VaultShares.sol";
 
+import {console} from "forge-std/console.sol";
+
 contract VaultSharesTest is Base_Test {
     uint256 mintAmount = 100 ether;
     address guardian = makeAddr("guardian");
@@ -125,6 +127,7 @@ contract VaultSharesTest is Base_Test {
         vm.startPrank(user);
         weth.approve(address(wethVaultShares), mintAmount);
         wethVaultShares.deposit(mintAmount, user);
+        vm.stopPrank();
         _;
     }
 
@@ -149,6 +152,7 @@ contract VaultSharesTest is Base_Test {
         uint256 startingSharesBalance = wethVaultShares.balanceOf(user);
         uint256 amoutToWithdraw = 1 ether;
 
+        vm.prank(user);
         wethVaultShares.withdraw(amoutToWithdraw, user, user);
 
         assertEq(weth.balanceOf(user), startingBalance + amoutToWithdraw);
@@ -160,6 +164,7 @@ contract VaultSharesTest is Base_Test {
         uint256 startingSharesBalance = wethVaultShares.balanceOf(user);
         uint256 amoutToRedeem = 1 ether;
 
+        vm.prank(user);
         wethVaultShares.redeem(amoutToRedeem, user, user);
 
         assert(weth.balanceOf(user) > startingBalance);

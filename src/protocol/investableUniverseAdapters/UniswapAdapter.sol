@@ -22,7 +22,7 @@ contract UniswapAdapter is AStaticUSDCData {
         i_uniswapFactory = IUniswapV2Factory(IUniswapV2Router01(i_uniswapRouter).factory());
     }
 
-    function uniswapInvest(IERC20 token, uint256 amount) internal {
+    function _uniswapInvest(IERC20 token, uint256 amount) internal {
         IERC20 counterPartyToken = token == i_weth ? i_tokenOne : i_weth;
         // We will do half in WETH and half in the token
         uint256 amountOfTokenToSwap = amount / 2;
@@ -49,7 +49,7 @@ contract UniswapAdapter is AStaticUSDCData {
         emit UniswapInvested(tokenAmount, counterPartyTokenAmount, liquidity);
     }
 
-    function uniswapDivest(IERC20 token, uint256 liquidityAmount) internal returns (uint256 amountOfAssetReturned) {
+    function _uniswapDivest(IERC20 token, uint256 liquidityAmount) internal returns (uint256 amountOfAssetReturned) {
         IERC20 counterPartyToken = token == i_weth ? i_tokenOne : i_weth;
 
         (uint256 tokenAmount, uint256 counterPartyTokenAmount) = i_uniswapRouter.removeLiquidity(

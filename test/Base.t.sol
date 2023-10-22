@@ -31,12 +31,13 @@ abstract contract Base_Test is Test, IVaultData {
     ERC20Mock public ausdcTokenMock;
     ERC20Mock public alinkTokenMock;
     UniswapFactoryMock public uniswapFactoryMock;
+    DeployVaultGuardians public deployer;
 
     /*//////////////////////////////////////////////////////////////////////////
                                   SET-UP FUNCTION
     //////////////////////////////////////////////////////////////////////////*/
     function setUp() public virtual {
-        DeployVaultGuardians deployer = new DeployVaultGuardians();
+        deployer = new DeployVaultGuardians();
         (vaultGuardians, vaultGuardianGovernor, vaultGuardianToken, networkConfig) = deployer.run();
 
         (aavePool, uniswapRouter, wethAddress, usdcAddress, linkAddress) = networkConfig.activeNetworkConfig();

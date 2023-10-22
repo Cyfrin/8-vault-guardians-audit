@@ -31,6 +31,7 @@ import {VaultShares} from "./VaultShares.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IVaultShares, IVaultData} from "../interfaces/IVaultShares.sol";
 import {AStaticTokenData, IERC20} from "../abstract/AStaticTokenData.sol";
+import {VaultGuardianToken} from "../dao/VaultGuardianToken.sol";
 
 /*
  * @title VaultGuardiansBase
@@ -58,6 +59,7 @@ contract VaultGuardiansBase is AStaticTokenData, IVaultData {
     //////////////////////////////////////////////////////////////*/
     address private immutable i_aavePool;
     address private immutable i_uniswapV2Router;
+    VaultGuardianToken private immutable i_vgToken;
 
     uint256 private constant GUARDIAN_FEE = 0.1 ether;
 
@@ -91,15 +93,21 @@ contract VaultGuardiansBase is AStaticTokenData, IVaultData {
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-    constructor(address aavePool, address uniswapV2Router, address weth, address tokenOne, address tokenTwo)
-        AStaticTokenData(weth, tokenOne, tokenTwo)
-    {
+    constructor(
+        address aavePool,
+        address uniswapV2Router,
+        address weth,
+        address tokenOne,
+        address tokenTwo,
+        address vgToken
+    ) AStaticTokenData(weth, tokenOne, tokenTwo) {
         s_isApprovedToken[weth] = true;
         s_isApprovedToken[tokenOne] = true;
         s_isApprovedToken[tokenTwo] = true;
 
         i_aavePool = aavePool;
         i_uniswapV2Router = uniswapV2Router;
+        i_vgToken = VaultGuardianToken(vgToken);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -197,8 +205,15 @@ contract VaultGuardiansBase is AStaticTokenData, IVaultData {
         }
     }
 
+    /*
+     * @notice allows a user to become a guardian
+     * @notice guardians are given a VaultGuardianToken as payment
+     * @param token the token that the guardian will be guarding
+     * @param tokenVault the vault that the guardian will be guarding
+     */
     function _becomeTokenGuardian(IERC20 token, VaultShares tokenVault) private returns (address) {
         s_guardians[msg.sender][token] = IVaultShares(address(tokenVault));
+        i_vgToken.mint(msg.sender, s_guardianStakePrice);
         emit GuardianAdded(msg.sender, token);
         token.safeTransferFrom(msg.sender, address(this), s_guardianStakePrice);
         token.approve(address(tokenVault), s_guardianStakePrice);

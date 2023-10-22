@@ -52,9 +52,16 @@ contract VaultGuardians is Ownable, VaultGuardiansBase {
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-    constructor(address aavePool, address uniswapV2Router, address weth, address tokenOne, address tokenTwo)
+    constructor(
+        address aavePool,
+        address uniswapV2Router,
+        address weth,
+        address tokenOne,
+        address tokenTwo,
+        address vaultGuardiansToken
+    )
         Ownable(msg.sender)
-        VaultGuardiansBase(aavePool, uniswapV2Router, weth, tokenOne, tokenTwo)
+        VaultGuardiansBase(aavePool, uniswapV2Router, weth, tokenOne, tokenTwo, vaultGuardiansToken)
     {}
 
     /*

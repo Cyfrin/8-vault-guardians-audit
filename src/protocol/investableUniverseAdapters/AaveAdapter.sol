@@ -14,12 +14,12 @@ contract AaveAdapter {
         i_aavePool = IPool(aavePool);
     }
 
-    function aaveInvest(IERC20 asset, uint256 amount) internal {
+    function _aaveInvest(IERC20 asset, uint256 amount) internal {
         asset.approve(address(i_aavePool), amount);
         i_aavePool.supply(address(asset), amount, address(this), 0);
     }
 
-    function aaveDivest(IERC20 token, uint256 amount) internal returns (uint256 amountOfAssetReturned) {
+    function _aaveDivest(IERC20 token, uint256 amount) internal returns (uint256 amountOfAssetReturned) {
         amountOfAssetReturned = i_aavePool.withdraw(address(token), amount, address(this));
     }
 }

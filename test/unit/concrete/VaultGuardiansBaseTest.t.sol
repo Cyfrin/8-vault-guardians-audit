@@ -7,6 +7,11 @@ import {IERC20} from "../../../src/protocol/VaultGuardians.sol";
 import {ERC20Mock} from "../../mocks/ERC20Mock.sol";
 import {VaultGuardiansBase} from "../../../src/protocol/VaultGuardiansBase.sol";
 
+import {VaultGuardians} from "../../../src/protocol/VaultGuardians.sol";
+import {VaultGuardianGovernor} from "../../../src/dao/VaultGuardianGovernor.sol";
+import {VaultGuardianToken} from "../../../src/dao/VaultGuardianToken.sol";
+import {console} from "forge-std/console.sol";
+
 contract VaultGuardiansBaseTest is Base_Test {
     address public guardian = makeAddr("guardian");
     address public user = makeAddr("user");

@@ -67,10 +67,10 @@ contract VaultShares is ERC4626, IVaultShares, AaveAdapter, UniswapAdapter {
 
         // Divest
         if (uniswapLiquidityTokensBalance > 0) {
-            uniswapDivest(IERC20(asset()), uniswapLiquidityTokensBalance);
+            _uniswapDivest(IERC20(asset()), uniswapLiquidityTokensBalance);
         }
         if (aaveAtokensBalance > 0) {
-            aaveDivest(IERC20(asset()), aaveAtokensBalance);
+            _aaveDivest(IERC20(asset()), aaveAtokensBalance);
         }
 
         _;
@@ -144,8 +144,8 @@ contract VaultShares is ERC4626, IVaultShares, AaveAdapter, UniswapAdapter {
 
         emit FundsInvested();
 
-        uniswapInvest(IERC20(asset()), uniswapAllocation);
-        aaveInvest(IERC20(asset()), aaveAllocation);
+        _uniswapInvest(IERC20(asset()), uniswapAllocation);
+        _aaveInvest(IERC20(asset()), aaveAllocation);
     }
 
     /* 

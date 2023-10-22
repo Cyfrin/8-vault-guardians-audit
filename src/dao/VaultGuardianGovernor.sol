@@ -11,11 +11,11 @@ contract VaultGuardianGovernor is Governor, GovernorCountingSimple, GovernorVote
     constructor(IVotes _token) Governor("VaultGuardianGovernor") GovernorVotes(_token) GovernorVotesQuorumFraction(4) {}
 
     function votingDelay() public pure override returns (uint256) {
-        return 0;
+        return 1;
     }
 
     function votingPeriod() public pure override returns (uint256) {
-        return 0;
+        return 7 days;
     }
 
     // The following functions are overrides required by Solidity.
