@@ -73,8 +73,8 @@ Users can stake some ERC20s to become a vault guardian. Other users can allocate
 ## Quickstart
 
 ```
-git clone https://github.com/Cyfrin/7-vault-guardians-audit
-cd 7-vault-guardians-audit
+git clone https://github.com/Cyfrin/8-vault-guardians-audit
+cd 8-vault-guardians-audit
 make 
 ```
 
@@ -82,7 +82,7 @@ make
 
 If you can't or don't want to run and install locally, you can work with this repo in Gitpod. If you do this, you can skip the `clone this repo` part.
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#github.com/Cyfrin/5-vault-guardians-audit)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#github.com/Cyfrin/8-vault-guardians-audit)
 
 # Usage
 
