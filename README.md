@@ -28,7 +28,7 @@ You can think of a `vaultGuardian` as a fund manager.
 To prevent a vault guardian from running off with the funds, the vault guardians are only allowed to deposit and withdraw the ERC20s into specific protocols. 
 
 - [Aave v3](https://aave.com/) 
-- [Uniswap v3](https://uniswap.org/) 
+- [Uniswap v2](https://uniswap.org/) 
 - None (just hold) 
 
 These 2 protocols (plus "none" makes 3) are known as the "investable universe".

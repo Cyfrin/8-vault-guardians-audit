@@ -17,7 +17,7 @@ pandoc 2023-11-01-vault-guardians.md -o report.pdf --from markdown --template=ei
 
 We can use [cloc](https://www.geeksforgeeks.org/cloc-count-number-of-lines-of-code-in-file/) or [solidity-metrics](https://marketplace.visualstudio.com/items?itemName=tintinweb.solidity-metrics) to calculate number of lines of code. 
 
-Puppy raffle stats:
+Stats:
 ```
 nSLOC: 686
 Complexity: 432
