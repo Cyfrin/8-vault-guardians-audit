@@ -45,6 +45,9 @@ Lead Auditors:
     - [\[H-1\] Lack of UniswapV2 slippage protection in `UniswapAdapter::_uniswapInvest` enables frontrunners to steal profits](#h-1-lack-of-uniswapv2-slippage-protection-in-uniswapadapter_uniswapinvest-enables-frontrunners-to-steal-profits)
     - [\[H-2\] `ERC4626::totalAssets` checks the balance of vault's underlying asset even when the asset is invested, resulting in incorrect values being returned](#h-2-erc4626totalassets-checks-the-balance-of-vaults-underlying-asset-even-when-the-asset-is-invested-resulting-in-incorrect-values-being-returned)
     - [\[H-3\] Guardians can infinitely mint `VaultGuardianToken`s and take over DAO, stealing DAO fees and maliciously setting parameters](#h-3-guardians-can-infinitely-mint-vaultguardiantokens-and-take-over-dao-stealing-dao-fees-and-maliciously-setting-parameters)
+  - [Low](#low)
+    - [\[L-1\] Incorrect vault name and symbol](#l-1-incorrect-vault-name-and-symbol)
+    - [\[L-2\] Unassigned return value when divesting AAVE funds](#l-2-unassigned-return-value-when-divesting-aave-funds)
 
 # Disclaimer
 
@@ -123,11 +126,11 @@ The Vault Guardians project takes novel approaches to work ERC-4626 into a hedge
 | Severity | Number of issues found |
 | -------- | ---------------------- |
 | High     | 3                      |
-| Medium   | 0                      |
-| Low      | 1                      |
+| Medium   | 1                      |
+| Low      | 2                      |
 | Info     | 0                      |
 | Gas      | 0                      |
-| Total    | 4                      |
+| Total    | 6                      |
 
 ## High
 
@@ -253,13 +256,13 @@ function testWrongBalance() public {
 ```
 </details>
 
-**Recommended Mitigation:** Do not use the Openzeppelin implementation of the `ERC4626` contract. Instead, natively keep track of users total amounts sent to each protocol. Potentially have an automation tool or some incentivised mechanism to keep track of protocol's profits and losses, and take snapshots of the investable universe.
+**Recommended Mitigation:** Do not use the OpenZeppelin implementation of the `ERC4626` contract. Instead, natively keep track of users total amounts sent to each protocol. Potentially have an automation tool or some incentivised mechanism to keep track of protocol's profits and losses, and take snapshots of the investable universe.
 
 This would take a considerable re-write of the protocol. 
 
 ### [H-3] Guardians can infinitely mint `VaultGuardianToken`s and take over DAO, stealing DAO fees and maliciously setting parameters
 
-**Description:** Becoming a guardian comes with the perk of getting minted `VaultGuardianToken`s. Whenever a guardian successfully calls `VaultGuardiansBase::becomeGuardian` or `VaultGuardiansBase::becomeTokenGuardian` they call `_becomeTokenGuardian` which mints them `i_vgToken`. 
+**Description:** Becoming a guardian comes with the perk of getting minted Vault Guardian Tokens (vgTokens). Whenever a guardian successfully calls `VaultGuardiansBase::becomeGuardian` or `VaultGuardiansBase::becomeTokenGuardian`, `_becomeTokenGuardian` is executed, which mints the caller `i_vgToken`. 
 
 ```javascript
     function _becomeTokenGuardian(IERC20 token, VaultShares tokenVault) private returns (address) {
@@ -273,9 +276,9 @@ This would take a considerable re-write of the protocol.
     }
 ```
 
-A user is also free to quit being a guardian at any time. The combination of minting vgTokens, and freely being able to quit results in users being able to farm `vgTokens` at any time. 
+Guardians are also free to quit their role at any time, calling the `VaultGuardianBase::quitGuardian` function. The combination of minting vgTokens, and freely being able to quit, results in users being able to farm vgTokens at any time.
 
-**Impact:** Assuming the token has no monetary value, the malicious guardian could overtake the DAO and call and pass any of the functions: 
+**Impact:** Assuming the token has no monetary value, the malicious guardian could accumulate tokens until they can overtake the DAO. Then, they could execute any of these functions of the `VaultGuardians` contract:
 
 ```
   "sweepErc20s(address)": "942d0ff9",
@@ -286,10 +289,10 @@ A user is also free to quit being a guardian at any time. The combination of min
 
 **Proof of Concept:**
 
-1. User becomes WETH guardian, is minted VaultGuardianToken
-2. User quits, is given back original WETH allocation
-3. User becomes WETH guardian with the same initial allocation
-4. Repeat, gets infinitely minted WETH
+1. User becomes WETH guardian and is minted vgTokens.
+2. User quits, is given back original WETH allocation.
+3. User becomes WETH guardian with the same initial allocation.
+4. Repeat to keep minting vgTokens indefinitely.
 
 <details>
 <summary>Code</summary>
@@ -297,10 +300,6 @@ A user is also free to quit being a guardian at any time. The combination of min
 Place the following code into `VaultGuardiansBaseTest.t.sol`
 
 ```javascript
-    bytes[] functionCalls;
-    address[] addressesToCall;
-    uint256[] values;
-
     function testDaoTakeover() public hasGuardian hasTokenGuardian {
         address maliciousGuardian = makeAddr("maliciousGuardian");
         uint256 startingVoterUsdcBalance = usdc.balanceOf(maliciousGuardian);
@@ -308,23 +307,24 @@ Place the following code into `VaultGuardiansBaseTest.t.sol`
         assertEq(startingVoterUsdcBalance, 0);
         assertEq(startingVoterWethBalance, 0);
 
-        // 0. Flash loan the tokens, or just buy a bunch for 1 block
         VaultGuardianGovernor governor = VaultGuardianGovernor(payable(vaultGuardians.owner()));
         VaultGuardianToken vgToken = VaultGuardianToken(address(governor.token()));
 
-        // Malicious Guardian farms tokens
+        // Flash loan the tokens, or just buy a bunch for 1 block
         weth.mint(mintAmount, maliciousGuardian); // The same amount as the other guardians
         uint256 startingMaliciousVGTokenBalance = vgToken.balanceOf(maliciousGuardian);
         uint256 startingRegularVGTokenBalance = vgToken.balanceOf(guardian);
-        console.log("Malicious VGToken Balance:", startingMaliciousVGTokenBalance);
-        console.log("Regular VGToken Balance:", startingRegularVGTokenBalance);
+        console.log("Malicious vgToken Balance:\t", startingMaliciousVGTokenBalance);
+        console.log("Regular vgToken Balance:\t", startingRegularVGTokenBalance);
 
+        // Malicious Guardian farms tokens
         vm.startPrank(maliciousGuardian);
+        weth.approve(address(vaultGuardians), type(uint256).max);
         for (uint256 i; i < 10; i++) {
-            weth.approve(address(vaultGuardians), weth.balanceOf(maliciousGuardian));
             address maliciousWethSharesVault = vaultGuardians.becomeGuardian(allocationData);
             IERC20(maliciousWethSharesVault).approve(
-                address(vaultGuardians), IERC20(maliciousWethSharesVault).balanceOf(maliciousGuardian)
+                address(vaultGuardians),
+                IERC20(maliciousWethSharesVault).balanceOf(maliciousGuardian)
             );
             vaultGuardians.quitGuardian();
         }
@@ -332,18 +332,39 @@ Place the following code into `VaultGuardiansBaseTest.t.sol`
 
         uint256 endingMaliciousVGTokenBalance = vgToken.balanceOf(maliciousGuardian);
         uint256 endingRegularVGTokenBalance = vgToken.balanceOf(guardian);
-        console.log("Malicious VGToken Balance:", endingMaliciousVGTokenBalance);
-        console.log("Regular VGToken Balance:", endingRegularVGTokenBalance);
+        console.log("Malicious vgToken Balance:\t", endingMaliciousVGTokenBalance);
+        console.log("Regular vgToken Balance:\t", endingRegularVGTokenBalance);
     }
 ```
 </details>
 
 **Recommended Mitigation:** There are a few options to fix this issue:
 
-1. Mint `VaultGuardianToken`s on a vesting schedule after a user becomes a guardian
-2. Burn `VaultGuardianToken`s when a user quits 
+1. Mint vgTokens on a vesting schedule after a user becomes a guardian.
+2. Burn vgTokens when a guardian quits.
+3. Simply don't allocate vgTokens to guardians. Instead, mint the total supply on contract deployment.
 
-Or, simply do not allocate `VaultGuardianToken`s to guardians, and instead mint the total supply on contract deployment. 
+## Medium
+
+### [M-1] Potentially incorrect voting period and delay in governor may affect governance
+
+The `VaultGuardianGovernor` contract, based on [OpenZeppelin Contract's Governor](https://docs.openzeppelin.com/contracts/5.x/api/governance#governor), implements two functions to define the voting delay (`votingDelay`) and period (`votingPeriod`). The contract intends to define a voting delay of 1 day, and a voting period of 7 days. It does it by returning the value `1 days` from `votingDelay` and `7 days` from `votingPeriod`. In Solidity these values are translated to number of seconds.
+
+However, the `votingPeriod` and `votingDelay` functions, by default, are expected to return number of blocks. Not the number seconds. This means that the voting period and delay will be far off what the developers intended, which could potentially affect the intended governance mechanics.
+
+Consider updating the functions as follows:
+
+```diff
+function votingDelay() public pure override returns (uint256) {
+-   return 1 days;
++   return 7200; // 1 day
+}
+
+function votingPeriod() public pure override returns (uint256) {
+-   return 7 days;
++   return 50400; // 1 week
+}
+```
 
 ## Low
 
@@ -372,3 +393,20 @@ else if (address(token) == address(i_tokenTwo)) {
 ```
 
 Also, add a new test in the `VaultGuardiansBaseTest.t.sol` file to avoid reintroducing this error, similar to what's done in the test `testBecomeTokenGuardianTokenOneName`.
+
+### [L-2] Unassigned return value when divesting AAVE funds
+
+The `AaveAdapter::_aaveDivest` function is intended to return the amount of assets returned by AAVE after calling its `withdraw` function. However, the code never assigns a value to the named return variable `amountOfAssetReturned`. As a result, it will always return zero.
+
+While this return value is not being used anywhere in the code, it may cause problems in future changes. Therefore, update the `_aaveDivest` function as follows:
+
+```diff
+function _aaveDivest(IERC20 token, uint256 amount) internal returns (uint256 amountOfAssetReturned) {
+-       i_aavePool.withdraw({
++       amountOfAssetReturned = i_aavePool.withdraw({
+            asset: address(token),
+            amount: amount,
+            to: address(this)
+        });
+}
+```

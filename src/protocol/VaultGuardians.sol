@@ -88,7 +88,7 @@ contract VaultGuardians is Ownable, VaultGuardiansBase {
      * @notice Any excess ERC20s can be scooped up by the DAO. 
      * @notice This is often just little bits left around from swapping or rounding errors
      * @dev Since this is owned by the DAO, the funds will always go to the DAO. 
-     * @params asset The ERC20 to sweep
+     * @param asset The ERC20 to sweep
      */
     function sweepErc20s(IERC20 asset) external {
         uint256 amount = asset.balanceOf(address(this));

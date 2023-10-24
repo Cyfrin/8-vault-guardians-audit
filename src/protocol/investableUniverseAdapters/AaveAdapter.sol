@@ -30,7 +30,7 @@ contract AaveAdapter {
     }
 
     function _aaveDivest(IERC20 token, uint256 amount) internal returns (uint256 amountOfAssetReturned) {
-        amountOfAssetReturned = i_aavePool.withdraw({
+        i_aavePool.withdraw({
             asset: address(token),
             amount: amount,
             to: address(this)

