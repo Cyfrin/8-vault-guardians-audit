@@ -106,13 +106,13 @@ This protocol allows users to deposit certain ERC20s into an [ERC4626 vault](htt
 
 There are 4 main roles associated with the system. 
 
-- *Vault Guardian DAO*: The org that takes a cut of all profits, controled by the `VaultGuardianToken`. The DAO that controls a few variables of the protocol, including:
+- *Vault Guardian DAO*: The org that takes a cut of all profits, controlled by the `VaultGuardianToken`. The DAO that controls a few variables of the protocol, including:
   - `s_guardianStakePrice`
   - `s_guardianAndDaoCut`
   - And takes a cut of the ERC20s made from the protocol
 - *DAO Participants*: Holders of the `VaultGuardianToken` who vote and take profits on the protocol
-- *Vault Guardians*: Strategists/hedge fund managers who have the ability to move assets in and out of the investible universe. They take a cut of revenue from the protocol. 
-- *Investors*: The users of the protocol. They deposit assets to gain yeild from the investments of the Vault Guardians. 
+- *Vault Guardians*: Strategists/hedge fund managers who have the ability to move assets in and out of the investable universe. They take a cut of revenue from the protocol. 
+- *Investors*: The users of the protocol. They deposit assets to gain yield from the investments of the Vault Guardians. 
 
 # Executive Summary
 
@@ -124,31 +124,31 @@ The Vault Guardians project takes novel approaches to work ERC-4626 into a hedge
 | -------- | ---------------------- |
 | High     | 3                      |
 | Medium   | 0                      |
-| Low      | 0                      |
+| Low      | 1                      |
 | Info     | 0                      |
 | Gas      | 0                      |
-| Total    | 3                      |
+| Total    | 4                      |
 
 ## High
 
 ### [H-1] Lack of UniswapV2 slippage protection in `UniswapAdapter::_uniswapInvest` enables frontrunners to steal profits
 
-**Description:** In `UniswapAdapter::_uniswapInvest` the protocol swaps half of an ERC20 token so that they can invest in both sides of a Uniswap pool. The `UnisapV2Router01` contract that calls `swapExactTokensForTokens`, and it has two input variables to note:
+**Description:** In `UniswapAdapter::_uniswapInvest` the protocol swaps half of an ERC20 token so that they can invest in both sides of a Uniswap pool. It calls the `swapExactTokensForTokens` function of the `UnisapV2Router01` contract , which has two input parameters to note:
 
 ```javascript
     function swapExactTokensForTokens(
-            uint256 amountIn,
-@>          uint256 amountOutMin,
-            address[] calldata path,
-            address to,
-@>          uint256 deadline
-        )
+        uint256 amountIn,
+@>      uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+@>      uint256 deadline
+    )
 ```
 
-It takes a `amountOutMin`, which represents how much of the minimum number of tokens it expects to return. 
-It also takes `deadline`, which represents when the transaction should expire. 
+The parameter `amountOutMin` represents how much of the minimum number of tokens it expects to return. 
+The `deadline` parameter represents when the transaction should expire.
 
-The `UniswapAdapter::_uniswapInvest` sets those variables to `0` and `block.timestamp`:
+As seen below, the `UniswapAdapter::_uniswapInvest` function sets those parameters to `0` and `block.timestamp`:
 
 ```javascript
     uint256[] memory amounts = i_uniswapRouter.swapExactTokensForTokens(
@@ -161,18 +161,18 @@ The `UniswapAdapter::_uniswapInvest` sets those variables to `0` and `block.time
 ```
 
 **Impact:** This results in either of the following happening:
-- A node sees this transaction in the mempool, pulls a flashloan and swaps on Uniswap to tank the price, resulting in the protocol executing a bad swap
-- Due to the lack of a deadline, the node who gets this transaction could hold the transaction till they are able to profit from the gaurenteed swap
+- Anyone (e.g., a frontrunning bot) sees this transaction in the mempool, pulls a flashloan and swaps on Uniswap to tank the price before the swap happens, resulting in the protocol executing the swap at an unfavorable rate.
+- Due to the lack of a deadline, the node who gets this transaction could hold the transaction until they are able to profit from the guaranteed swap.
 
 **Proof of Concept:**
 
 1. User calls `VaultShares::deposit` with a vault that has a Uniswap allocation. 
-   1. This calls `_uniswapInvest` for a user to invest into Uniswap, and calls `swapExactTokensForTokens`.
+   1. This calls `_uniswapInvest` for a user to invest into Uniswap, and calls the router's `swapExactTokensForTokens` function.
 2. In the mempool, a malicious user could:
    1. Hold onto this transaction which makes the Uniswap swap
    2. Take a flashloan out
    3. Make a major swap on Uniswap, greatly changing the price of the assets
-   4. Execute the transaction that was being held, giving the protocol as little funds back as possible due to the `0` `amountOutMin` value 
+   4. Execute the transaction that was being held, giving the protocol as little funds back as possible due to the `amountOutMin` value set to 0. 
 
 This could potentially allow malicious MEV users and frontrunners to drain balances. 
 
@@ -180,9 +180,9 @@ This could potentially allow malicious MEV users and frontrunners to drain balan
 
 *For the deadline issue, we recommend the following:*
 
-DeFi is a large landscape, for protocols that have sensitive investing parameters, add a custom parameter to the `deposit` function so the Vault Guardians protocol can account for the customizations of DeFi protocols.
+DeFi is a large landscape. For protocols that have sensitive investing parameters, add a custom parameter to the `deposit` function so the Vault Guardians protocol can account for the customizations of DeFi projects that it integrates with.
 
-In the deposit function, consider allowing for custom data. 
+In the `deposit` function, consider allowing for custom data. 
 
 ```diff
 - function deposit(uint256 assets, address receiver) public override(ERC4626, IERC4626) isActive returns (uint256) {
@@ -191,24 +191,24 @@ In the deposit function, consider allowing for custom data.
 
 This way, you could add a `deadline` to the Uniswap swap, and also allow for more DeFi custom integrations. 
 
-*For the `amountOutMin` issue, we recommend the one of the following:*
+*For the `amountOutMin` issue, we recommend one of the following:*
 
-1. Do a price check on something like a [Chainlink price feed](https://docs.chain.link/data-feeds) before making the swap
+1. Do a price check on something like a [Chainlink price feed](https://docs.chain.link/data-feeds) before making the swap, reverting if the rate is too unfavorable.
 2. Only deposit 1 side of a Uniswap pool for liquidity. Don't make the swap at all. If a pool doesn't exist or has too low liquidity for a pair of ERC20s, don't allow investment in that pool. 
 
-This recommendation requires a significant change to the codebase. 
+Note that these recommendation require significant changes to the codebase.
 
 ### [H-2] `ERC4626::totalAssets` checks the balance of vault's underlying asset even when the asset is invested, resulting in incorrect values being returned
 
-**Description:** `ERC4626::totalAssets` checks the `balanceOf` the underlying asset for the vault. 
+**Description:** The `ERC4626::totalAssets` function checks the balance of the underlying asset for the vault using the `balanceOf` function. 
 
 ```javascript
 function totalAssets() public view virtual returns (uint256) {
-        return _asset.balanceOf(address(this));
-    }
+    return _asset.balanceOf(address(this));
+}
 ```
 
-However, the assets are invested in the investible universe, ie Aave and Uniswap, which means this will never return the correct value. 
+However, the assets are invested in the investable universe (Aave and Uniswap) which means this will never return the correct value of assets in the vault. 
 
 **Impact:** This breaks many functions of the `ERC4626` contract:
 - `totalAssets`
@@ -218,7 +218,7 @@ However, the assets are invested in the investible universe, ie Aave and Uniswap
 - `withdraw`
 - `deposit`
 
-All calculations depend on the number of assets in the protocol, severly disrupting the protocol functionality.  
+All calculations that depend on the number of assets in the protocol would be flawed, severely disrupting the protocol functionality.  
 
 **Proof of Concept:**
 
@@ -229,31 +229,31 @@ Add the following code to the `VaultSharesTest.t.sol` file.
 
 ```javascript
 function testWrongBalance() public {
-        // Mint 100 ETH
-        weth.mint(mintAmount, guardian);
-        vm.startPrank(guardian);
-        weth.approve(address(vaultGuardians), mintAmount);
-        address wethVault = vaultGuardians.becomeGuardian(allocationData);
-        wethVaultShares = VaultShares(wethVault);
-        vm.stopPrank();
+    // Mint 100 ETH
+    weth.mint(mintAmount, guardian);
+    vm.startPrank(guardian);
+    weth.approve(address(vaultGuardians), mintAmount);
+    address wethVault = vaultGuardians.becomeGuardian(allocationData);
+    wethVaultShares = VaultShares(wethVault);
+    vm.stopPrank();
 
-        // prints 3.75 ETH
-        console.log(wethVaultShares.totalAssets());
+    // prints 3.75 ETH
+    console.log(wethVaultShares.totalAssets());
 
-        // Mint another 100 ETH
-        weth.mint(mintAmount, user);
-        vm.startPrank(user);
-        weth.approve(address(wethVaultShares), mintAmount);
-        wethVaultShares.deposit(mintAmount, user);
-        vm.stopPrank();
+    // Mint another 100 ETH
+    weth.mint(mintAmount, user);
+    vm.startPrank(user);
+    weth.approve(address(wethVaultShares), mintAmount);
+    wethVaultShares.deposit(mintAmount, user);
+    vm.stopPrank();
 
-        // prints 41.25 ETH
-        console.log(wethVaultShares.totalAssets());
-    }
+    // prints 41.25 ETH
+    console.log(wethVaultShares.totalAssets());
+}
 ```
 </details>
 
-**Recommended Mitigation:** Do not use the Openzeppelin implementation of `ERC4626` and instead natively keep track of users total amounts sentto each protocol. Potentially have an automation tool or incentive to keep track of profits and losses, and take snapshots of the investible universe. 
+**Recommended Mitigation:** Do not use the Openzeppelin implementation of the `ERC4626` contract. Instead, natively keep track of users total amounts sent to each protocol. Potentially have an automation tool or some incentivised mechanism to keep track of protocol's profits and losses, and take snapshots of the investable universe.
 
 This would take a considerable re-write of the protocol. 
 
@@ -344,3 +344,31 @@ Place the following code into `VaultGuardiansBaseTest.t.sol`
 2. Burn `VaultGuardianToken`s when a user quits 
 
 Or, simply do not allocate `VaultGuardianToken`s to guardians, and instead mint the total supply on contract deployment. 
+
+## Low
+
+### [L-1] Incorrect vault name and symbol
+
+When new vaults are deployed in the `VaultGuardianBase::becomeTokenGuardian` function, symbol and vault name are set incorrectly when the `token` is equal to `i_tokenTwo`. Consider modifying the function as follows, to avoid errors in off-chain clients reading these values to identify vaults. 
+
+```diff
+else if (address(token) == address(i_tokenTwo)) {
+    tokenVault =
+    new VaultShares(IVaultShares.ConstructorData({
+        asset: token,
+-       vaultName: TOKEN_ONE_VAULT_NAME,
++       vaultName: TOKEN_TWO_VAULT_NAME,
+-       vaultSymbol: TOKEN_ONE_VAULT_SYMBOL,
++       vaultSymbol: TOKEN_TWO_VAULT_SYMBOL,
+        guardian: msg.sender,
+        allocationData: allocationData,
+        aavePool: i_aavePool,
+        uniswapRouter: i_uniswapV2Router,
+        guardianAndDaoCut: s_guardianAndDaoCut,
+        vaultGuardian: address(this),
+        weth: address(i_weth),
+        usdc: address(i_tokenOne)
+    }));
+```
+
+Also, add a new test in the `VaultGuardiansBaseTest.t.sol` file to avoid reintroducing this error, similar to what's done in the test `testBecomeTokenGuardianTokenOneName`.

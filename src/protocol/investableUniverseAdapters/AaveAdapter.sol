@@ -21,10 +21,19 @@ contract AaveAdapter {
         if (!succ) {
             revert AaveAdapter__TransferFailed();
         }
-        i_aavePool.supply(address(asset), amount, address(this), 0);
+        i_aavePool.supply({
+            asset: address(asset),
+            amount: amount,
+            onBehalfOf: address(this),
+            referralCode: 0
+        });
     }
 
     function _aaveDivest(IERC20 token, uint256 amount) internal returns (uint256 amountOfAssetReturned) {
-        amountOfAssetReturned = i_aavePool.withdraw(address(token), amount, address(this));
+        amountOfAssetReturned = i_aavePool.withdraw({
+            asset: address(token),
+            amount: amount,
+            to: address(this)
+        });
     }
 }

@@ -37,9 +37,13 @@ contract UniswapAdapter is AStaticUSDCData {
         if (!succ) {
             revert UniswapAdapter__TransferFailed();
         }
-        uint256[] memory amounts = i_uniswapRouter.swapExactTokensForTokens(
-            amountOfTokenToSwap, 0, s_pathArray, address(this), block.timestamp
-        );
+        uint256[] memory amounts = i_uniswapRouter.swapExactTokensForTokens({
+            amountIn: amountOfTokenToSwap,
+            amountOutMin: 0,
+            path: s_pathArray,
+            to: address(this),
+            deadline: block.timestamp
+        });
 
         succ = counterPartyToken.approve(address(i_uniswapRouter), amounts[1]);
         if (!succ) {
@@ -51,29 +55,39 @@ contract UniswapAdapter is AStaticUSDCData {
         }
 
         // amounts[1] should be the WETH amount we got back
-        (uint256 tokenAmount, uint256 counterPartyTokenAmount, uint256 liquidity) = i_uniswapRouter.addLiquidity(
-            address(token),
-            address(counterPartyToken),
-            amountOfTokenToSwap + amounts[0],
-            amounts[1],
-            0,
-            0,
-            address(this),
-            block.timestamp
-        );
+        (uint256 tokenAmount, uint256 counterPartyTokenAmount, uint256 liquidity) = i_uniswapRouter.addLiquidity({
+            tokenA: address(token),
+            tokenB: address(counterPartyToken),
+            amountADesired: amountOfTokenToSwap + amounts[0],
+            amountBDesired: amounts[1],
+            amountAMin: 0,
+            amountBMin: 0,
+            to: address(this),
+            deadline: block.timestamp
+        });
         emit UniswapInvested(tokenAmount, counterPartyTokenAmount, liquidity);
     }
 
     function _uniswapDivest(IERC20 token, uint256 liquidityAmount) internal returns (uint256 amountOfAssetReturned) {
         IERC20 counterPartyToken = token == i_weth ? i_tokenOne : i_weth;
 
-        (uint256 tokenAmount, uint256 counterPartyTokenAmount) = i_uniswapRouter.removeLiquidity(
-            address(token), address(counterPartyToken), liquidityAmount, 0, 0, address(this), block.timestamp
-        );
+        (uint256 tokenAmount, uint256 counterPartyTokenAmount) = i_uniswapRouter.removeLiquidity({
+            tokenA: address(token),
+            tokenB: address(counterPartyToken),
+            liquidity: liquidityAmount,
+            amountAMin: 0,
+            amountBMin: 0,
+            to: address(this),
+            deadline: block.timestamp
+        });
         s_pathArray = [address(counterPartyToken), address(token)];
-        uint256[] memory amounts = i_uniswapRouter.swapExactTokensForTokens(
-            counterPartyTokenAmount, 0, s_pathArray, address(this), block.timestamp
-        );
+        uint256[] memory amounts = i_uniswapRouter.swapExactTokensForTokens({
+            amountIn: counterPartyTokenAmount,
+            amountOutMin: 0,
+            path: s_pathArray,
+            to: address(this),
+            deadline: block.timestamp
+        });
         emit UniswapDivested(tokenAmount, amounts[1]);
         amountOfAssetReturned = amounts[1];
     }
