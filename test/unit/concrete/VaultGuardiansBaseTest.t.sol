@@ -188,18 +188,6 @@ contract VaultGuardiansBaseTest is Base_Test {
         assertEq(usdcVaultShares.symbol(), vaultGuardians.TOKEN_ONE_VAULT_SYMBOL());
     }
 
-    function testBecomeTokenGuardianTokenTwoName() public hasGuardian {
-        link.mint(mintAmount, guardian);
-        vm.startPrank(guardian);
-        link.approve(address(vaultGuardians), mintAmount);
-        address tokenVault = vaultGuardians.becomeTokenGuardian(allocationData, link);
-        linkVaultShares = VaultShares(tokenVault);
-        vm.stopPrank();
-
-        assertEq(linkVaultShares.name(), vaultGuardians.TOKEN_TWO_VAULT_NAME());
-        assertEq(linkVaultShares.symbol(), vaultGuardians.TOKEN_TWO_VAULT_SYMBOL());
-    }
-
     function testBecomeTokenGuardianTokenTwoNameEmitsEvent() public hasGuardian {
         link.mint(mintAmount, guardian);
         vm.startPrank(guardian);

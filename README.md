@@ -58,8 +58,7 @@ Guardians can earn DAO tokens by becoming guardians. The DAO is responsible for:
 
 ## Summary
 
-Users can stake some ERC20s to become a vault guardian. Other users can allocate them funds in order to maximize yield. The guardians can move the funds between Uniswap, Aave, Compound, or just hold the funds. The guardians are incentivized to maximize yield, as they earn a performance fee.
-
+Users can stake some ERC20s to become a vault guardian. Other users can allocate them funds in order to maximize yield. The guardians can move the funds between Uniswap, Aave, or just hold the funds. The guardians are incentivized to maximize yield, as they earn a performance fee.
 
 # Getting Started
 
@@ -87,6 +86,10 @@ If you can't or don't want to run and install locally, you can work with this re
 # Usage
 
 ## Testing
+
+Set the `RPC_URL_MAINNET` environment variable with the URL of a mainnet RPC node. It's used for tests that fork Ethereum mainnet state.
+
+Then run:
 
 ```
 forge test

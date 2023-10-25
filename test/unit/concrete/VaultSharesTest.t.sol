@@ -13,11 +13,19 @@ contract VaultSharesTest is Base_Test {
     uint256 mintAmount = 100 ether;
     address guardian = makeAddr("guardian");
     address user = makeAddr("user");
-    AllocationData allocationData = AllocationData(500, 250, 250);
+    AllocationData allocationData = AllocationData(
+        500, // hold
+        250, // uniswap
+        250 // aave
+    );
     VaultShares public wethVaultShares;
     uint256 public defaultGuardianAndDaoCut = 1000;
 
-    AllocationData newAllocationData = AllocationData(0, 500, 500);
+    AllocationData newAllocationData = AllocationData(
+        0, // hold
+        500, // uniswap
+        500 // aave
+    );
 
     function setUp() public override {
         Base_Test.setUp();

@@ -15,7 +15,7 @@ contract VaultGuardianGovernor is Governor, GovernorCountingSimple, GovernorVote
     {}
 
     function votingDelay() public pure override returns (uint256) {
-        return 1;
+        return 1 days;
     }
 
     function votingPeriod() public pure override returns (uint256) {
