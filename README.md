@@ -121,4 +121,12 @@ forge coverage --report debug
 ```
 - Solc Version: 0.8.20
 - Chain(s) to deploy contract to: Ethereum
+- Tokens:
+  - weth: https://etherscan.io/token/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
+  - link: https://etherscan.io/token/0x514910771af9ca656af840dff83e8264ecf986ca
+  - usdc: https://etherscan.io/token/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+
+# Known issues 
+- All issues in the `audit-data` folder are considered known
+- We are aware that USDC is behind a proxy and is susceptible to being paused and upgraded. Please assume for this audit that is not the case.  
 
