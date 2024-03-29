@@ -16,6 +16,9 @@ abstract contract AStaticWethData {
         i_weth = IERC20(weth);
     }
 
+    /**
+     * @return The WETH token
+     */
     function getWeth() external view returns (IERC20) {
         return i_weth;
     }
