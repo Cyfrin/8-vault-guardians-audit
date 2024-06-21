@@ -27,10 +27,24 @@ contract UniswapAdapter is AStaticUSDCData {
     // slither-disable-start reentrancy-eth
     // slither-disable-start reentrancy-benign
     // slither-disable-start reentrancy-events
+    /**
+     * @notice The vault holds only one type of asset token. However, we need to provide liquidity to Uniswap in a pair
+     * @notice So we swap out half of the vault's underlying asset token for WETH if the asset token is USDC or WETH
+     * @notice However, if the asset token is WETH, we swap half of it for USDC (tokenOne)
+     * @notice The tokens we obtain are then added as liquidity to Uniswap pool, and LP tokens are minted to the vault
+     * @param token The vault's underlying asset token
+     * @param amount The amount of vault's underlying asset token to use for the investment
+     */
     function _uniswapInvest(IERC20 token, uint256 amount) internal {
         IERC20 counterPartyToken = token == i_weth ? i_tokenOne : i_weth;
         // We will do half in WETH and half in the token
         uint256 amountOfTokenToSwap = amount / 2;
+        // the path array is supplied to the Uniswap router, which allows us to create swap paths
+        // in case a pool does not exist for the input token and the output token
+        // however, in this case, we are sure that a swap path exists for all pair permutations of WETH, USDC and LINK
+        // (excluding pair permutations including the same token type)
+        // the element at index 0 is the address of the input token
+        // the element at index 1 is the address of the output token
         s_pathArray = [address(token), address(counterPartyToken)];
 
         bool succ = token.approve(address(i_uniswapRouter), amountOfTokenToSwap);
@@ -68,6 +82,12 @@ contract UniswapAdapter is AStaticUSDCData {
         emit UniswapInvested(tokenAmount, counterPartyTokenAmount, liquidity);
     }
 
+    /**
+     * @notice The LP tokens of the added liquidity are burnt
+     * @notice The other token (which isn't the vault's underlying asset token) is swapped for the vault's underlying asset token
+     * @param token The vault's underlying asset token
+     * @param liquidityAmount The amount of LP tokens to burn
+     */
     function _uniswapDivest(IERC20 token, uint256 liquidityAmount) internal returns (uint256 amountOfAssetReturned) {
         IERC20 counterPartyToken = token == i_weth ? i_tokenOne : i_weth;
 

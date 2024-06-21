@@ -98,8 +98,8 @@ contract VaultGuardiansBase is AStaticTokenData, IVaultData {
         address aavePool,
         address uniswapV2Router,
         address weth,
-        address tokenOne,
-        address tokenTwo,
+        address tokenOne, // USDC
+        address tokenTwo, // LINK
         address vgToken
     ) AStaticTokenData(weth, tokenOne, tokenTwo) {
         s_isApprovedToken[weth] = true;
@@ -138,6 +138,12 @@ contract VaultGuardiansBase is AStaticTokenData, IVaultData {
         return _becomeTokenGuardian(i_weth, wethVault);
     }
 
+    /**
+     * @notice Allows anyone to become a vault guardian for any one of the other supported tokens (USDC, LINK)
+     * @notice However, only WETH vault guardians can become vault guardians for other tokens
+     * @param allocationData A struct indicating the ratio of asset tokens to hold, invest in Aave and Uniswap (based on Vault Guardian strategy)
+     * @param token The token to become a Vault Guardian for
+     */
     function becomeTokenGuardian(AllocationData memory allocationData, IERC20 token)
         external
         onlyGuardian(i_weth)
@@ -206,6 +212,11 @@ contract VaultGuardiansBase is AStaticTokenData, IVaultData {
         return _quitGuardian(token);
     }
 
+    /**
+     * @notice Allows Vault Guardians to update their allocation ratio (and thus, their strategy of investment)
+     * @param token The token vault whose allocation ratio is to be updated
+     * @param tokenAllocationData The new allocation data
+     */
     function updateHoldingAllocation(IERC20 token, AllocationData memory tokenAllocationData)
         external
         onlyGuardian(token)
@@ -217,6 +228,14 @@ contract VaultGuardiansBase is AStaticTokenData, IVaultData {
     /*//////////////////////////////////////////////////////////////
                             PUBLIC FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+
+    /*//////////////////////////////////////////////////////////////
+                           INTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /*//////////////////////////////////////////////////////////////
+                           PRIVATE FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
     function _quitGuardian(IERC20 token) private returns (uint256) {
         IVaultShares tokenVault = IVaultShares(s_guardians[msg.sender][token]);
         s_guardians[msg.sender][token] = IVaultShares(address(0));
@@ -227,13 +246,10 @@ contract VaultGuardiansBase is AStaticTokenData, IVaultData {
         return numberOfAssetsReturned;
     }
 
-    /*//////////////////////////////////////////////////////////////
-                           INTERNAL FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
-    /*//////////////////////////////////////////////////////////////
-                           PRIVATE FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
+    /**
+     * @notice Checks if the vault guardian is owner of vaults other than WETH vaults
+     * @param guardian the vault guardian
+     */
     function _guardianHasNonWethVaults(address guardian) private view returns (bool) {
         if (address(s_guardians[guardian][i_tokenOne]) != address(0)) {
             return true;
@@ -273,26 +289,47 @@ contract VaultGuardiansBase is AStaticTokenData, IVaultData {
     /*//////////////////////////////////////////////////////////////
                    EXTERNAL AND PUBLIC VIEW AND PURE
     //////////////////////////////////////////////////////////////*/
+    /**
+     * @notice Gets the vault for a given vault guardian and a given asset token
+     * @param guardian the vault guardian
+     * @param token the vault's underlying asset token
+     */
     function getVaultFromGuardianAndToken(address guardian, IERC20 token) external view returns (IVaultShares) {
         return s_guardians[guardian][token];
     }
 
+    /**
+     * @notice Checks if the given token is supported by the protocol
+     * @param token the token to check for
+     */
     function isApprovedToken(address token) external view returns (bool) {
         return s_isApprovedToken[token];
     }
 
+    /**
+     * @return Address of the Aave pool
+     */
     function getAavePool() external view returns (address) {
         return i_aavePool;
     }
 
+    /**
+     * @return Address of the Uniswap v2 router
+     */
     function getUniswapV2Router() external view returns (address) {
         return i_uniswapV2Router;
     }
 
+    /**
+     * @return Retrieves the stake price that users have to stake to become vault guardians
+     */
     function getGuardianStakePrice() external view returns (uint256) {
         return s_guardianStakePrice;
     }
 
+    /**
+     * @return The ratio of the amount in vaults that goes to the vault guardians and the DAO
+     */
     function getGuardianAndDaoCut() external view returns (uint256) {
         return s_guardianAndDaoCut;
     }

@@ -14,6 +14,9 @@ abstract contract AStaticUSDCData is AStaticWethData {
         i_tokenOne = IERC20(tokenOne);
     }
 
+    /**
+     * @return The USDC token
+     */
     function getTokenOne() external view returns (IERC20) {
         return i_tokenOne;
     }

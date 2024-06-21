@@ -62,6 +62,9 @@ contract VaultShares is ERC4626, IVaultShares, AaveAdapter, UniswapAdapter, Reen
     }
 
     // slither-disable-start reentrancy-eth
+    /**
+     * @notice removes all supplied liquidity from Uniswap and supplied lending amount from Aave and then re-invests it back into them only if the vault is active
+     */
     modifier divestThenInvest() {
         uint256 uniswapLiquidityTokensBalance = i_uniswapLiquidityToken.balanceOf(address(this));
         uint256 aaveAtokensBalance = i_aaveAToken.balanceOf(address(this));
@@ -105,11 +108,19 @@ contract VaultShares is ERC4626, IVaultShares, AaveAdapter, UniswapAdapter, Reen
         i_uniswapLiquidityToken = IERC20(i_uniswapFactory.getPair(address(constructorData.asset), address(i_weth)));
     }
 
+    /**
+     * @notice Sets the vault as not active, which means that the vault guardian has quit
+     * @notice Users will not be able to invest in this vault, however, they will be able to withdraw their deposited assets
+     */
     function setNotActive() public onlyVaultGuardians isActive {
         s_isActive = false;
         emit NoLongerActive();
     }
 
+    /**
+     * @notice Allows Vault Guardians to update their allocation ratio (and thus, their strategy of investment)
+     * @param tokenAllocationData The new allocation data
+     */
     function updateHoldingAllocation(AllocationData memory tokenAllocationData) public onlyVaultGuardians isActive {
         uint256 totalAllocation = tokenAllocationData.holdAllocation + tokenAllocationData.uniswapAllocation
             + tokenAllocationData.aaveAllocation;
@@ -147,6 +158,10 @@ contract VaultShares is ERC4626, IVaultShares, AaveAdapter, UniswapAdapter, Reen
         return shares;
     }
 
+    /**
+     * @notice Invests user deposited assets into the investable universe (hold, Uniswap, or Aave) based on the allocation data set by the vault guardian
+     * @param assets The amount of assets to invest
+     */
     function _investFunds(uint256 assets) private {
         uint256 uniswapAllocation = (assets * s_allocationData.uniswapAllocation) / ALLOCATION_PRECISION;
         uint256 aaveAllocation = (assets * s_allocationData.aaveAllocation) / ALLOCATION_PRECISION;
@@ -204,30 +219,51 @@ contract VaultShares is ERC4626, IVaultShares, AaveAdapter, UniswapAdapter, Reen
     /*//////////////////////////////////////////////////////////////
                              VIEW AND PURE
     //////////////////////////////////////////////////////////////*/
+    /**
+     * @return The guardian of the vault
+     */
     function getGuardian() external view returns (address) {
         return i_guardian;
     }
 
+    /**
+     * @return The ratio of the amount in vaults that goes to the vault guardians and the DAO
+     */
     function getGuardianAndDaoCut() external view returns (uint256) {
         return i_guardianAndDaoCut;
     }
 
+    /**
+     * @return Gets the address of the Vault Guardians protocol
+     */
     function getVaultGuardians() external view returns (address) {
         return i_vaultGuardians;
     }
 
+    /**
+     * @return A bool indicating if the vault is active (has an active vault guardian and is accepting deposits) or not
+     */
     function getIsActive() external view returns (bool) {
         return s_isActive;
     }
 
+    /**
+     * @return The Aave aToken for the vault's underlying asset
+     */
     function getAaveAToken() external view returns (address) {
         return address(i_aaveAToken);
     }
 
+    /**
+     * @return Uniswap's LP token
+     */
     function getUniswapLiquidtyToken() external view returns (address) {
         return address(i_uniswapLiquidityToken);
     }
 
+    /**
+     * @return The allocation data set by the vault guardian
+     */
     function getAllocationData() external view returns (AllocationData memory) {
         return s_allocationData;
     }

@@ -14,6 +14,9 @@ abstract contract AStaticTokenData is AStaticUSDCData {
         i_tokenTwo = IERC20(tokenTwo);
     }
 
+    /**
+     * @return The LINK token
+     */
     function getTokenTwo() external view returns (IERC20) {
         return i_tokenTwo;
     }
