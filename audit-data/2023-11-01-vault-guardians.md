@@ -41,10 +41,13 @@ Lead Auditors:
   - [Roles](#roles)
 - [Executive Summary](#executive-summary)
   - [Issues Found](#issues-found)
+- [Findings](#findings)
   - [High](#high)
     - [\[H-1\] Lack of UniswapV2 slippage protection in `UniswapAdapter::_uniswapInvest` enables frontrunners to steal profits](#h-1-lack-of-uniswapv2-slippage-protection-in-uniswapadapter_uniswapinvest-enables-frontrunners-to-steal-profits)
     - [\[H-2\] `ERC4626::totalAssets` checks the balance of vault's underlying asset even when the asset is invested, resulting in incorrect values being returned](#h-2-erc4626totalassets-checks-the-balance-of-vaults-underlying-asset-even-when-the-asset-is-invested-resulting-in-incorrect-values-being-returned)
     - [\[H-3\] Guardians can infinitely mint `VaultGuardianToken`s and take over DAO, stealing DAO fees and maliciously setting parameters](#h-3-guardians-can-infinitely-mint-vaultguardiantokens-and-take-over-dao-stealing-dao-fees-and-maliciously-setting-parameters)
+  - [Medium](#medium)
+    - [\[M-1\] Potentially incorrect voting period and delay in governor may affect governance](#m-1-potentially-incorrect-voting-period-and-delay-in-governor-may-affect-governance)
   - [Low](#low)
     - [\[L-1\] Incorrect vault name and symbol](#l-1-incorrect-vault-name-and-symbol)
     - [\[L-2\] Unassigned return value when divesting AAVE funds](#l-2-unassigned-return-value-when-divesting-aave-funds)
@@ -131,6 +134,8 @@ The Vault Guardians project takes novel approaches to work ERC-4626 into a hedge
 | Info     | 0                      |
 | Gas      | 0                      |
 | Total    | 6                      |
+
+# Findings
 
 ## High
 
